@@ -12,7 +12,14 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 
 import cats.data.{NonEmptyChain, ValidatedNec}
-import com.github.lhohan.techradar.CsvToRadar.{ConversionResult, ConversionWarning, CsvRecord, DecodingWarning, JsonEntity, NoRadarBlips}
+import com.github.lhohan.techradar.CsvToRadar.{
+  ConversionResult,
+  ConversionWarning,
+  CsvRecord,
+  DecodingWarning,
+  JsonEntity,
+  NoRadarBlips
+}
 
 object CsvToRadar extends CsvToRadar {
 
@@ -60,7 +67,7 @@ trait CsvToRadar {
     }
     val htmlContentResult = {
       val entitiesResolved = jsonResult.map(resolveInHtmlTemplate)
-      val dateResolved = entitiesResolved.map(resolveDate)
+      val dateResolved     = entitiesResolved.map(resolveDate)
       dateResolved
     }
     val pathResult = htmlContentResult.map { htmlContent =>
@@ -158,9 +165,9 @@ trait CsvToRadar {
   }
 
   private def resolveDate(template: String): String = {
-    val date = LocalDate.now()
+    val date      = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("yyyy.MM")
-    val text = formatter.format(date)
+    val text      = formatter.format(date)
     template.replace("$TIME$", text)
   }
 
