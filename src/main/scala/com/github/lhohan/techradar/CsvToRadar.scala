@@ -8,16 +8,11 @@ import kantan.csv.ops._
 import kantan.csv.generic._
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 import cats.data.{NonEmptyChain, ValidatedNec}
-import com.github.lhohan.techradar.CsvToRadar.{
-  ConversionResult,
-  ConversionWarning,
-  CsvRecord,
-  DecodingWarning,
-  JsonEntity,
-  NoRadarBlips
-}
+import com.github.lhohan.techradar.CsvToRadar.{ConversionResult, ConversionWarning, CsvRecord, DecodingWarning, JsonEntity, NoRadarBlips}
 
 object CsvToRadar extends CsvToRadar {
 
@@ -63,8 +58,22 @@ trait CsvToRadar {
       val target = targetDir.resolve("index.md")
       Files.write(target, content.getBytes)
     }
-    val htmlContentResult = jsonResult.map(resolveInTemplate)
+    val htmlContentResult = {
+      val entitiesResolved = jsonResult.map(resolveInHtmlTemplate)
+      val dateResolved = entitiesResolved.map(resolveDate)
+      dateResolved
+    }
     val pathResult = htmlContentResult.map { htmlContent =>
+      // HTML needs to radar js and css file so first copy those
+      def copyResourceToTarget(resourceName: String) = {
+        val resource = getClass.getResource(s"/$resourceName")
+        val source   = read(Source.fromURL(resource))
+        val target   = targetDir.resolve(resourceName)
+        Files.write(target, source.getBytes)
+      }
+      val resources = Seq("radar.css", "radar.js")
+      resources.foreach(copyResourceToTarget)
+
       val targetHtml = targetDir.resolve("index.html")
       Files.write(targetHtml, htmlContent.getBytes)
     }
@@ -142,10 +151,17 @@ trait CsvToRadar {
       .mkString("\n")
   }
 
-  private def resolveInTemplate(entities: String): String = {
+  private def resolveInHtmlTemplate(entities: String): String = {
     val templateUrl: java.net.URL = getClass.getResource("/index_template.html")
     val template                  = read(Source.fromURL(templateUrl))
     template.replace("$ENTRIES$", entities)
+  }
+
+  private def resolveDate(template: String): String = {
+    val date = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy.MM")
+    val text = formatter.format(date)
+    template.replace("$TIME$", text)
   }
 
   private def read(source: Source): String = {
