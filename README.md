@@ -1,3 +1,6 @@
+![Scala CI](https://github.com/lhohan/time-tracking/workflows/Scala%20CI/badge.svg)
+
+
 # Command line Tech Radar
 
 Generate a static Tech Radar similar to Thoughtworks's Technology radar. This version is based on the Zalando Technology radar.
