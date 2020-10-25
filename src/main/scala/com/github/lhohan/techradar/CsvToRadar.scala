@@ -1,5 +1,7 @@
 package com.github.lhohan.techradar
 
+import java.net.URL
+
 import cats.implicits._
 
 import scala.io.Source
@@ -55,7 +57,8 @@ object CsvToRadar extends CsvToRadar {
 trait CsvToRadar {
   def convert(
       source: Source,
-      targetDir: Path
+      targetDir: Path,
+      htmlTemplate: URL
   ): ConversionResult[(List[ConversionWarning], Path)] = {
 
     val (csvResult, csvWarnings) = parseAndValidate(source)
@@ -66,7 +69,7 @@ trait CsvToRadar {
       Files.write(target, content.getBytes)
     }
     val htmlContentResult = {
-      val entitiesResolved = jsonResult.map(resolveInHtmlTemplate)
+      val entitiesResolved = jsonResult.map(resolveInHtmlTemplate(_, htmlTemplate))
       val dateResolved     = entitiesResolved.map(resolveDate)
       dateResolved
     }
@@ -111,7 +114,7 @@ trait CsvToRadar {
       case "up"   => 1
       case "down" => -1
       case "none" => 0
-      case _      => 1
+      case _      => 0
     }
     val entityQuadrant = csv.quadrant.toLowerCase match {
       case "languages and frameworks" => 0
@@ -158,9 +161,8 @@ trait CsvToRadar {
       .mkString("\n")
   }
 
-  private def resolveInHtmlTemplate(entities: String): String = {
-    val templateUrl: java.net.URL = getClass.getResource("/index_template.html")
-    val template                  = read(Source.fromURL(templateUrl))
+  private def resolveInHtmlTemplate(entities: String, htmlTemplate: java.net.URL): String = {
+    val template = read(Source.fromURL(htmlTemplate))
     template.replace("$ENTRIES$", entities)
   }
 

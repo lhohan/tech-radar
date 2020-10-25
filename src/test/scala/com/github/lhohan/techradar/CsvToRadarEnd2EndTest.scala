@@ -14,7 +14,8 @@ class CsvToRadarEnd2EndTest extends AnyFlatSpec with Matchers {
 
     CsvToRadar.convert(
       Source.fromURL(rawData),
-      testTargetPath
+      testTargetPath,
+      getClass.getResource("/index_template.html")
     )
 
     val expectedOutputFileHtml = testTargetPath.resolve("index.html")

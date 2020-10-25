@@ -20,13 +20,14 @@ This tool generates static files that can be run stand-alone.
 
 Command arguments:
 
-- `-s`, `--source` : path to local CSV file
-- `-t`, `--target` : path to target directory where output will be generated
+- `-s`, `--source` : mandatory,path to local CSV file
+- `-t`, `--target` : optional, path to target directory where output will be generated. Default: run directory.
+- `-p`, `--template` : optional, path to customized HTML template file. If not a default template file will be generated. 
 
 Using `sbt` : 
 
 ```bash
-sbt "run -s radar.csv -t out/"
+sbt "run -s src/test/resources/example.csv -t out/ -p src/main/resources/index_template.html"
 ```
 
 ## CSV format

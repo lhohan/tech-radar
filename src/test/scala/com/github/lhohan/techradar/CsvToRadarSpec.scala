@@ -17,7 +17,11 @@ class CsvToRadarSpec extends AnyFlatSpec with Matchers {
     val csvOnlyHead = Source.fromString("name,ring,quadrant,moved,description\n")
 
     val result =
-      CsvToRadar.convert(csvOnlyHead, Paths.get(System.getProperty("user.dir")).resolve("target"))
+      CsvToRadar.convert(
+        csvOnlyHead,
+        Paths.get(System.getProperty("user.dir")).resolve("target"),
+        getClass.getResource("/index_template.html")
+      )
 
     result.isInvalid should be(true)
     val Invalid(Chain(error)) = result

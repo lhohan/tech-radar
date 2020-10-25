@@ -48,11 +48,35 @@ object Main extends CsvToRadar with App {
           |CSV file containing the radar entries.
           |""".stripMargin)
 
+    opt[File]('p', "template")
+      .optional()
+      .valueName("<path to HTML template>")
+      .action { (x, c) =>
+        c.copy(htmlTemplate = x.toPath.toUri.toURL)
+      }
+      .validate { f =>
+        val path = f.toPath
+        if (Files.notExists(path)) {
+          failure(
+            s"Option --template: template file does not exist: ${f.toPath.toAbsolutePath.toString}"
+          )
+        } else {
+          success
+        }
+      }
+      .text("""
+              |Path to Tech Radar template file.
+              |""".stripMargin)
+
   }
 
   parser.parse(args, Config()) match {
     case Some(config) =>
-      CsvToRadar.convert(Source.fromFile(config.sourceFile.toFile), config.targetDir)
+      CsvToRadar.convert(
+        Source.fromFile(config.sourceFile.toFile),
+        config.targetDir,
+        config.htmlTemplate
+      )
     case None => println("Please correct error(s) above")
   }
 
