@@ -41,7 +41,7 @@ object CsvToRadar extends CsvToRadar {
       quadrant: Int,
       moved: Int,
       link: String = "",
-      active: Boolean = false
+      active: Boolean = true
   )
 
   case class JsonResult(value: String)           extends AnyVal
@@ -139,7 +139,7 @@ trait CsvToRadar {
         "quadrant" -> ujson.Num(entity.quadrant),
         "ring"     -> ujson.Num(entity.ring),
         "moved"    -> ujson.Num(entity.moved),
-        "link"     -> ujson.Str(entity.link),
+        "link"     -> ujson.Str("#" + generateId(entity.label)),
         "active"   -> ujson.Bool(entity.active)
       )
     }.toList
@@ -178,9 +178,14 @@ trait CsvToRadar {
     )
   }
 
-  private def generateId(csv: CsvRecord) = {
-    csv.name.collect {
+  private def generateId(csv: CsvRecord): String = {
+    generateId(csv.name)
+  }
+
+  private def generateId(s: String): String = {
+    s.collect {
       case ' '                    => '-'
+      case '-'                    => '-'
       case c if c.isLetterOrDigit => c
     }.toLowerCase
   }
