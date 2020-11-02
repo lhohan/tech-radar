@@ -20,7 +20,9 @@ import com.github.lhohan.techradar.CsvToRadar.{
   CsvRecord,
   DecodingWarning,
   JsonEntity,
-  NoRadarBlips
+  JsonResult,
+  NoRadarBlips,
+  ReferenceTableResult
 }
 
 object CsvToRadar extends CsvToRadar {
@@ -39,8 +41,11 @@ object CsvToRadar extends CsvToRadar {
       quadrant: Int,
       moved: Int,
       link: String = "",
-      active: Boolean = false
+      active: Boolean = true
   )
+
+  case class JsonResult(value: String)           extends AnyVal
+  case class ReferenceTableResult(value: String) extends AnyVal
 
   // Warnings are non-fatal: they still allow to produce a result.
   sealed trait ConversionWarning
@@ -62,15 +67,10 @@ trait CsvToRadar {
   ): ConversionResult[(List[ConversionWarning], Path)] = {
 
     val (csvResult, csvWarnings) = parseAndValidate(source)
-    val jsonResult               = csvResult.map(toJson)
-    val markdownResult           = csvResult.map(toMarkdown)
-    markdownResult.map { content =>
-      val target = targetDir.resolve("index.md")
-      Files.write(target, content.getBytes)
-    }
+    val jsonAndReferenceResult   = csvResult.map { csv => (toJson(csv), toReference(csv)) }
     val htmlContentResult = {
-      val entitiesResolved = jsonResult.map(resolveInHtmlTemplate(_, htmlTemplate))
-      val dateResolved     = entitiesResolved.map(resolveDate)
+      val dataResolved = jsonAndReferenceResult.map(resolveInHtmlTemplate(_, htmlTemplate))
+      val dateResolved = dataResolved.map(resolveDate)
       dateResolved
     }
     val pathResult = htmlContentResult.map { htmlContent =>
@@ -131,7 +131,7 @@ trait CsvToRadar {
     JsonEntity(csv.name, entityRing, entityQuadrant, entityMoved)
   }
 
-  private def toJson(csvRecords: NonEmptyChain[CsvRecord]): String = {
+  private def toJson(csvRecords: NonEmptyChain[CsvRecord]): JsonResult = {
     val output = csvRecords.map { record =>
       val entity = convert(record)
       ujson.Obj(
@@ -139,31 +139,65 @@ trait CsvToRadar {
         "quadrant" -> ujson.Num(entity.quadrant),
         "ring"     -> ujson.Num(entity.ring),
         "moved"    -> ujson.Num(entity.moved),
-        "link"     -> ujson.Str(entity.link),
+        "link"     -> ujson.Str("#" + generateId(entity.label)),
         "active"   -> ujson.Bool(entity.active)
       )
     }.toList
-    ujson.write(output)
+    JsonResult(ujson.write(output))
   }
 
-  private def toMarkdown(csvRecords: NonEmptyChain[CsvRecord]): String = {
-    csvRecords.toList
+  private def toReference(csvRecords: NonEmptyChain[CsvRecord]): ReferenceTableResult = {
+    import scalatags.Text.all._
+
+    def htmlRecord(csv: CsvRecord) = {
+      val idVal = generateId(csv)
+      div(cls := "radar-record", id := idVal)(
+        Seq(
+          p(h3(s"${csv.name}")),
+          p(csv.description.map(d => raw(d)).getOrElse("")),
+          p(s"${csv.ring.toUpperCase} in ${csv.quadrant.capitalize}")
+        )
+      )
+    }
+
+    val htmlRecords = csvRecords.toList
       .sortBy(_.name)
-      .map { record =>
-        s"""## ${record.name} - ${record.ring}
-           |
-           |${record.quadrant}
-           |
-           |${record.description.getOrElse("")}
-           |
-           |""".stripMargin
+      .map { htmlRecord }
+
+    val tabled = table(
+      tr(td(h2("Tech Reference")), td("")),
+      htmlRecords.grouped(2).toList.map {
+        case List(c1, c2) => tr(td(c1), td(c2))
+        case List(c1)     => tr(td(c1), td(""))
       }
-      .mkString("\n")
+    )
+
+    ReferenceTableResult(
+      p(raw("&nbsp;")).toString() +
+        tabled.toString()
+    )
   }
 
-  private def resolveInHtmlTemplate(entities: String, htmlTemplate: java.net.URL): String = {
+  private def generateId(csv: CsvRecord): String = {
+    generateId(csv.name)
+  }
+
+  private def generateId(s: String): String = {
+    s.collect {
+      case ' '                    => '-'
+      case '-'                    => '-'
+      case c if c.isLetterOrDigit => c
+    }.toLowerCase
+  }
+
+  private def resolveInHtmlTemplate(
+      results: (JsonResult, ReferenceTableResult),
+      htmlTemplate: java.net.URL
+  ): String = {
     val template = read(Source.fromURL(htmlTemplate))
-    template.replace("$ENTRIES$", entities)
+    template
+      .replace("$ENTRIES$", results._1.value)
+      .replace("$REFERENCE_TABLE$", results._2.value)
   }
 
   private def resolveDate(template: String): String = {

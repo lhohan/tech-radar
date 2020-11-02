@@ -9,7 +9,7 @@ import scala.io.Source
 
 class CsvToRadarEnd2EndTest extends AnyFlatSpec with Matchers {
 
-  "The CSV to Radar conversion" should "convert a list of valid CSV records to HTML and Markdown radar" in {
+  "The CSV to Radar conversion" should "convert a list of valid CSV records to HTML radar page" in {
     val rawData: java.net.URL = getClass.getResource("/example.csv")
 
     CsvToRadar.convert(
@@ -20,8 +20,6 @@ class CsvToRadarEnd2EndTest extends AnyFlatSpec with Matchers {
 
     val expectedOutputFileHtml = testTargetPath.resolve("index.html")
     Files.exists(expectedOutputFileHtml) should be(true)
-    val expectedOutputFileMd = testTargetPath.resolve("index.md")
-    Files.exists(expectedOutputFileMd) should be(true)
     val expectedOutputRadarCss = testTargetPath.resolve("radar.css")
     Files.exists(expectedOutputRadarCss) should be(true)
     val expectedOutputRadarJs = testTargetPath.resolve("radar.js")

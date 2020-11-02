@@ -43,10 +43,6 @@ TypeScript,adopt,languages and frameworks,none,"..."
 
 Important:
 
-- `ring`: most correspond with the lowercase name in the HTML template
-- `quadrant`: most correspond with the lowercase name in the HTML template
+- `ring`: must correspond with the lowercase name in the HTML template
+- `quadrant`: must correspond with the lowercase name in the HTML template
 - `moved`: valid values: `up`, `down`, `none`
-
-## Customizing
-
-To change the content of the HTML template modify the template file in `src/main/resources`. 

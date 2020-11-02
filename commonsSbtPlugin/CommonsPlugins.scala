@@ -27,6 +27,7 @@ object CommonsPlugin extends AutoPlugin {
     libraryDependencies += catsCore,
     libraryDependencies += csv,
     libraryDependencies += csvGeneric,
+    libraryDependencies += scalaTags,
     libraryDependencies += scopt,
     libraryDependencies += uPickle,
   )
@@ -45,6 +46,7 @@ object Dependencies {
   lazy val catsCore   = "org.typelevel" %% "cats-core"          % "2.0.0"
   lazy val csv        = "com.nrinaudo"  %% "kantan.csv"         % "0.6.1"
   lazy val csvGeneric = "com.nrinaudo"  %% "kantan.csv-generic" % "0.6.1"
+  lazy val scalaTags = "com.lihaoyi" %% "scalatags" % "0.8.2"
   lazy val scopt = "com.github.scopt" %% "scopt" % "4.0.0-RC2"
   lazy val uPickle    = "com.lihaoyi"   %% "upickle"            % "1.2.2"
   lazy val scalaTest  = "org.scalatest" %% "scalatest"          % "3.2.2"
