@@ -16,7 +16,9 @@ Thoughtworks provides this functionality against a local running container. This
 
 This tool generates static files that can be run stand-alone. 
 
-## Running
+## Usage
+
+Download the latest release from [releases](https://github.com/lhohan/tech-radar/releases). 
 
 Command arguments:
 
@@ -46,3 +48,14 @@ Important:
 - `ring`: must correspond with the lowercase name in the HTML template
 - `quadrant`: must correspond with the lowercase name in the HTML template
 - `moved`: valid values: `up`, `down`, `none`
+
+
+## A new release
+
+Until automated the manual steps how to release (mostly for my own reference):
+
+- Update the version where needed
+- Commit an push
+- Publish locally
+- Use Coursier to build the executable, e.g. `cs bootstrap io.github.lhohan::tech-radar-from-csv:0.1.1 --standalone -o techradar -f`
+- Upload the release for the version

@@ -66,6 +66,8 @@ object Main extends CsvToRadar with App {
       }
       .text("""
               |Path to Tech Radar template file.
+              |If not template is specified a default one will be used.
+              |An example template file that can customized is available here https://github.com/lhohan/tech-radar/blob/main/src/main/resources/index_template.html
               |""".stripMargin)
 
   }
