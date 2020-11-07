@@ -8,9 +8,9 @@ The Tech Radar is a tool popularized by Thoughtworks's Technology radar. This im
 
 Thoughtworks provides an online tool to Building Your Own Tech Radar from a CSV file.
 
-You can also run this tool locally using a Docker container. This requires the container to be running to which you need to provide a CSV from an HTML end-point and have the docker container permanently running.
+You can also run this tool locally using a Docker container. This requires the container to be running to which you need to submit a CSV from an HTML end-point.
 
-All these can be combined to script to generate the Radar locally as well, but I was looking for something more light-weight.
+All these can be combined into script to generate the Radar locally, but I was looking for something more light-weight.
 
 Main features:
 
