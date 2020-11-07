@@ -1,56 +1,23 @@
 ![Scala CI](https://github.com/lhohan/time-tracking/workflows/Scala%20CI/badge.svg)
 
 
-# Command line Tech Radar
+# Tech Radar generation
 
-Generate a static Tech Radar similar to Thoughtworks's Technology radar. This version is based on the Zalando Technology radar.
+Generate a static Tech Radar from the command line using a CSV.  
 
-## Motivation
+For usage see the [documentation page](https://gh-pages.d29iz8jq65dy3y.amplifyapp.com/).
 
-1. Run from a text file that can be put under source control
-2. Run locally
+## Dev guide
 
-Thoughtworks provides Building Your Own Tech Radar using a CSV but this is an online tool.
- 
-Thoughtworks provides this functionality against a local running container. This requires the container to be running to which you need to provide a CSV from an HTML end-point and have the docker container permanently running.
+### Local dev
 
-This tool generates static files that can be run stand-alone. 
+Run the radar from source:
 
-## Usage
-
-Download the latest release from [releases](https://github.com/lhohan/tech-radar/releases). 
-
-Command arguments:
-
-- `-s`, `--source` : mandatory,path to local CSV file
-- `-t`, `--target` : optional, path to target directory where output will be generated. Default: run directory.
-- `-p`, `--template` : optional, path to customized HTML template file. If not a default template file will be generated. 
-
-Using `sbt` : 
-
-```bash
+```
 sbt "run -s src/test/resources/example.csv -t out/ -p src/main/resources/index_template.html"
 ```
 
-## CSV format
-
-```
-name,ring,quadrant,moved,description
-Decision records,adopt,techniques,none,"..."
-Domain Driven Design,trial,techniques,none,"..."
-Property-based testing,trial,techniques,none,"..."
-Scala,adopt,languages and frameworks,none,"..."
-TypeScript,adopt,languages and frameworks,none,"..."
-```
-
-Important:
-
-- `ring`: must correspond with the lowercase name in the HTML template
-- `quadrant`: must correspond with the lowercase name in the HTML template
-- `moved`: valid values: `up`, `down`, `none`
-
-
-## A new release
+### Releasing
 
 Until automated the manual steps how to release (mostly for my own reference):
 
@@ -59,3 +26,19 @@ Until automated the manual steps how to release (mostly for my own reference):
 - Publish locally
 - Use Coursier to build the executable, e.g. `cs bootstrap io.github.lhohan::tech-radar-from-csv:0.1.1 --standalone -o techradar -f`
 - Upload the release for the version
+
+### Documentation
+
+- mkdocs + gh-pages (branch)
+  - Deploy: `mkdocs gh-deploy`
+- Hosted on AWS using [Amplify](https://us-east-2.console.aws.amazon.com/amplify/)
+
+### Some technical notes:
+
+- This project is developed using `Scala` and `sbt`. It is not aimed to be the cleanest project and is used to 
+
+1. serve its purpose: generate a radar from the commandline relatively easy
+2. experiment with build tooling and implementation
+   1. research: sbt configuration completely managed by a local sbt plugin
+   
+ 
