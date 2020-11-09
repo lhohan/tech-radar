@@ -18,8 +18,8 @@ import cats.data.{NonEmptyChain, Validated, ValidatedNec}
 import com.github.lhohan.techradar.CsvToRadar.{
   ConversionResult,
   ConversionWarning,
+  CsvRecordDecoded,
   CsvRecord,
-  CsvRecord2,
   DecodingWarning,
   Down,
   FirstQuadrant,
@@ -42,7 +42,7 @@ import com.github.lhohan.techradar.CsvToRadar.{
 
 object CsvToRadar extends CsvToRadar {
 
-  case class CsvRecord(
+  case class CsvRecordDecoded(
       name: String,
       ring: String,
       quadrant: String,
@@ -69,7 +69,7 @@ object CsvToRadar extends CsvToRadar {
 
   case class Name(value: String) extends AnyVal
 
-  case class CsvRecord2(
+  case class CsvRecord(
       name: Name,
       ring: Ring,
       quadrant: Quadrant,
@@ -134,10 +134,10 @@ trait CsvToRadar {
 
   private def parseAndValidate(
       source: Source
-  ): (ConversionResult[NonEmptyChain[CsvRecord2]], List[ConversionWarning]) = {
+  ): (ConversionResult[NonEmptyChain[CsvRecord]], List[ConversionWarning]) = {
     val (csvRecords, warnings) = {
-      val csvIterator = read(source).asCsvReader[CsvRecord](rfc.withHeader).toList
-      csvIterator.foldLeft((List.empty[CsvRecord2], List.empty[ConversionWarning])) {
+      val csvIterator = read(source).asCsvReader[CsvRecordDecoded](rfc.withHeader).toList
+      csvIterator.foldLeft((List.empty[CsvRecord], List.empty[ConversionWarning])) {
         case ((csvs, warnings), x) =>
           x match {
             case Right(csv) =>
@@ -155,7 +155,7 @@ trait CsvToRadar {
     }
   }
 
-  private def validate(csv: CsvRecord): Validated[String, CsvRecord2] = {
+  private def validate(csv: CsvRecordDecoded): Validated[String, CsvRecord] = {
     val entityMoved = csv.moved match {
       case "up"   => Up.valid
       case "down" => Down.valid
@@ -183,11 +183,11 @@ trait CsvToRadar {
 
     }
     (entityRing, entityQuadrant, entityMoved).mapN { (r, q, m) =>
-      CsvRecord2(Name(csv.name), r, q, m, csv.description)
+      CsvRecord(Name(csv.name), r, q, m, csv.description)
     }
   }
 
-  private def convert(csv: CsvRecord2): JsonEntity = {
+  private def convert(csv: CsvRecord): JsonEntity = {
     val entityMoved = csv.moved match {
       case Up       => 1
       case Down     => -1
@@ -208,7 +208,7 @@ trait CsvToRadar {
     JsonEntity(csv.name.value, entityRing, entityQuadrant, entityMoved)
   }
 
-  private def toJson(csvRecords: NonEmptyChain[CsvRecord2]): JsonResult = {
+  private def toJson(csvRecords: NonEmptyChain[CsvRecord]): JsonResult = {
     val output = csvRecords.map { record =>
       val entity = convert(record)
       ujson.Obj(
@@ -223,14 +223,14 @@ trait CsvToRadar {
     JsonResult(ujson.write(output))
   }
 
-  private def toReference(csvRecords: NonEmptyChain[CsvRecord2]): ReferenceTableResult = {
+  private def toReference(csvRecords: NonEmptyChain[CsvRecord]): ReferenceTableResult = {
     import scalatags.Text.all._
 
-    def htmlRecord(csv: CsvRecord2) = {
+    def htmlRecord(csv: CsvRecord) = {
       val idVal = generateId(csv.name.value)
       div(cls := "radar-record", id := idVal)(
         Seq(
-          p(h3(s"${csv.name}")),
+          p(h3(s"${csv.name.value}")),
           p(csv.description.map(d => raw(d)).getOrElse(""))
         )
       )
@@ -252,10 +252,6 @@ trait CsvToRadar {
       p(raw("&nbsp;")).toString() +
         tabled.toString()
     )
-  }
-
-  private def generateId(csv: CsvRecord): String = {
-    generateId(csv.name)
   }
 
   private def generateId(s: String): String = {
