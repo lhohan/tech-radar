@@ -13,16 +13,31 @@ import java.nio.file.Path
 import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 
-import cats.data.{NonEmptyChain, ValidatedNec}
+import cats.data.Validated.{Invalid, Valid}
+import cats.data.{NonEmptyChain, Validated, ValidatedNec}
 import com.github.lhohan.techradar.CsvToRadar.{
   ConversionResult,
   ConversionWarning,
   CsvRecord,
+  CsvRecord2,
   DecodingWarning,
+  Down,
+  FirstQuadrant,
+  FirstRing,
+  InvalidInput,
   JsonEntity,
   JsonResult,
+  Name,
   NoRadarBlips,
-  ReferenceTableResult
+  NotMoved,
+  ReferenceTableResult,
+  SecondQuadrant,
+  SecondRing,
+  ThirdQuadrant,
+  ThirdRing,
+  Up,
+  ZerothQuadrant,
+  ZerothRing
 }
 
 object CsvToRadar extends CsvToRadar {
@@ -32,6 +47,33 @@ object CsvToRadar extends CsvToRadar {
       ring: String,
       quadrant: String,
       moved: String,
+      description: Option[String]
+  )
+
+  sealed trait Quadrant
+  case object ZerothQuadrant extends Quadrant
+  case object FirstQuadrant  extends Quadrant
+  case object SecondQuadrant extends Quadrant
+  case object ThirdQuadrant  extends Quadrant
+
+  sealed trait Ring
+  case object ZerothRing extends Ring
+  case object FirstRing  extends Ring
+  case object SecondRing extends Ring
+  case object ThirdRing  extends Ring
+
+  sealed trait Moved
+  case object Up       extends Moved
+  case object Down     extends Moved
+  case object NotMoved extends Moved
+
+  case class Name(value: String) extends AnyVal
+
+  case class CsvRecord2(
+      name: Name,
+      ring: Ring,
+      quadrant: Quadrant,
+      moved: Moved,
       description: Option[String]
   )
 
@@ -50,7 +92,7 @@ object CsvToRadar extends CsvToRadar {
   // Warnings are non-fatal: they still allow to produce a result.
   sealed trait ConversionWarning
   case class DecodingWarning(msg: String) extends ConversionWarning
-  case class EncodingWarning()            extends ConversionWarning
+  case class InvalidInput(msg: String)    extends ConversionWarning
 
   // Error are fatal: the block reporting of a result.
   sealed trait ConversionError
@@ -92,13 +134,17 @@ trait CsvToRadar {
 
   private def parseAndValidate(
       source: Source
-  ): (ConversionResult[NonEmptyChain[CsvRecord]], List[ConversionWarning]) = {
+  ): (ConversionResult[NonEmptyChain[CsvRecord2]], List[ConversionWarning]) = {
     val (csvRecords, warnings) = {
       val csvIterator = read(source).asCsvReader[CsvRecord](rfc.withHeader).toList
-      csvIterator.foldLeft((List.empty[CsvRecord], List.empty[ConversionWarning])) {
+      csvIterator.foldLeft((List.empty[CsvRecord2], List.empty[ConversionWarning])) {
         case ((csvs, warnings), x) =>
           x match {
-            case Right(csv)    => (csvs :+ csv, warnings)
+            case Right(csv) =>
+              validate(csv) match {
+                case Invalid(errorMsg) => (csvs, warnings :+ InvalidInput(errorMsg))
+                case Valid(csv)        => (csvs :+ csv, warnings)
+              }
             case Left(warning) => (csvs, warnings :+ DecodingWarning(warning.getMessage))
           }
       }
@@ -109,29 +155,60 @@ trait CsvToRadar {
     }
   }
 
-  private def convert(csv: CsvRecord): JsonEntity = {
+  private def validate(csv: CsvRecord): Validated[String, CsvRecord2] = {
     val entityMoved = csv.moved match {
-      case "up"   => 1
-      case "down" => -1
-      case "none" => 0
-      case _      => 0
+      case "up"   => Up.valid
+      case "down" => Down.valid
+      case "none" => NotMoved.valid
+      case unsupported =>
+        s"CSV record '${csv.name}' in invalid, 'moved' value not supported: '${unsupported}'".invalid
     }
     val entityQuadrant = csv.quadrant.toLowerCase match {
-      case "languages and frameworks" => 0
-      case "techniques"               => 1
-      case "platforms"                => 2
-      case "tools"                    => 3
+      case "languages and frameworks" => ZerothQuadrant.valid
+      case "techniques"               => FirstQuadrant.valid
+      case "platforms"                => SecondQuadrant.valid
+      case "tools"                    => ThirdQuadrant.valid
+
+      case unsupported =>
+        s"CSV record '${csv.name}' in invalid, 'quadrant' value not supported: '${unsupported}'".invalid
+
     }
     val entityRing = csv.ring.toLowerCase match {
-      case "adopt"  => 0
-      case "trial"  => 1
-      case "assess" => 2
-      case "hold"   => 3
+      case "adopt"  => ZerothRing.valid
+      case "trial"  => FirstRing.valid
+      case "assess" => SecondRing.valid
+      case "hold"   => ThirdRing.valid
+      case unsupported =>
+        s"CSV record '${csv.name}' in invalid, 'ring' value not supported: '${unsupported}'".invalid
+
     }
-    JsonEntity(csv.name, entityRing, entityQuadrant, entityMoved)
+    (entityRing, entityQuadrant, entityMoved).mapN { (r, q, m) =>
+      CsvRecord2(Name(csv.name), r, q, m, csv.description)
+    }
   }
 
-  private def toJson(csvRecords: NonEmptyChain[CsvRecord]): JsonResult = {
+  private def convert(csv: CsvRecord2): JsonEntity = {
+    val entityMoved = csv.moved match {
+      case Up       => 1
+      case Down     => -1
+      case NotMoved => 0
+    }
+    val entityQuadrant = csv.quadrant match {
+      case ZerothQuadrant => 0
+      case FirstQuadrant  => 1
+      case SecondQuadrant => 2
+      case ThirdQuadrant  => 3
+    }
+    val entityRing = csv.ring match {
+      case ZerothRing => 0
+      case FirstRing  => 1
+      case SecondRing => 2
+      case ThirdRing  => 3
+    }
+    JsonEntity(csv.name.value, entityRing, entityQuadrant, entityMoved)
+  }
+
+  private def toJson(csvRecords: NonEmptyChain[CsvRecord2]): JsonResult = {
     val output = csvRecords.map { record =>
       val entity = convert(record)
       ujson.Obj(
@@ -146,23 +223,22 @@ trait CsvToRadar {
     JsonResult(ujson.write(output))
   }
 
-  private def toReference(csvRecords: NonEmptyChain[CsvRecord]): ReferenceTableResult = {
+  private def toReference(csvRecords: NonEmptyChain[CsvRecord2]): ReferenceTableResult = {
     import scalatags.Text.all._
 
-    def htmlRecord(csv: CsvRecord) = {
-      val idVal = generateId(csv)
+    def htmlRecord(csv: CsvRecord2) = {
+      val idVal = generateId(csv.name.value)
       div(cls := "radar-record", id := idVal)(
         Seq(
           p(h3(s"${csv.name}")),
-          p(csv.description.map(d => raw(d)).getOrElse("")),
-          p(s"${csv.ring.toUpperCase} in ${csv.quadrant.capitalize}")
+          p(csv.description.map(d => raw(d)).getOrElse(""))
         )
       )
     }
 
     val htmlRecords = csvRecords.toList
-      .sortBy(_.name)
-      .map { htmlRecord }
+      .sortBy(_.name.value)
+      .map(htmlRecord)
 
     val tabled = table(
       tr(td(h2("Tech Reference")), td("")),

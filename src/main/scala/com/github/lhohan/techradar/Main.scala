@@ -3,6 +3,9 @@ package com.github.lhohan.techradar
 import java.io.File
 import java.nio.file.Files
 
+import cats.data.Validated.{Invalid, Valid}
+import com.github.lhohan.techradar.CsvToRadar.{DecodingWarning, InvalidInput, NoRadarBlips}
+
 import scala.io.Source
 
 object Main extends CsvToRadar with App {
@@ -78,7 +81,22 @@ object Main extends CsvToRadar with App {
         Source.fromFile(config.sourceFile.toFile),
         config.targetDir,
         config.htmlTemplate
-      )
+      ) match {
+        case Invalid(e) =>
+          e.toNonEmptyList.toList.foreach { case NoRadarBlips =>
+            System.err.println("No radar blips present")
+          }
+        case Valid((warnings, path)) =>
+          if (warnings.nonEmpty) {
+            println("Warnings:")
+            warnings.foreach {
+              case InvalidInput(msg)    => println(s"  Invalid input      : $msg")
+              case DecodingWarning(msg) => println(s"  Failed decoding CSV: $msg")
+            }
+            println()
+          }
+          println(s"Radar written to ${path.toRealPath()}")
+      }
     case None => println("Please correct error(s) above")
   }
 
