@@ -182,8 +182,23 @@ trait CsvToRadar {
         s"CSV record '${csv.name}' in invalid, 'ring' value not supported: '${unsupported}'".invalid
 
     }
-    (ring, quadrant, moved).mapN { (r, q, m) =>
-      CsvRecord(Name(csv.name), r, q, m, csv.description)
+
+    val name = {
+      val n = if (csv.name.isBlank) {
+        s"CSV record '${csv.name}' in invalid, 'name' value should not be blank".invalid
+      } else {
+        val MaxNameLength = 22 // to fit in radar columns
+        if (csv.name.length > MaxNameLength) {
+          s"CSV record '${csv.name}' in invalid, 'name' value is too long, should be max $MaxNameLength".invalid
+        } else {
+          csv.name.valid
+        }
+      }
+      n.map(Name)
+    }
+
+    (name, ring, quadrant, moved).mapN { (n, r, q, m) =>
+      CsvRecord(n, r, q, m, csv.description)
     }
   }
 
