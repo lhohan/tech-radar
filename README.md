@@ -1,6 +1,6 @@
 ![Scala CI](https://github.com/lhohan/time-tracking/workflows/Scala%20CI/badge.svg)
 [![CodeFactor](https://www.codefactor.io/repository/github/lhohan/tech-radar/badge/main)](https://www.codefactor.io/repository/github/lhohan/tech-radar/overview/main)
-
+[![codecov](https://codecov.io/gh/lhohan/tech-radar/branch/main/graph/badge.svg?token=54SEP6EL0D)](https://codecov.io/gh/lhohan/tech-radar)
 
 # Tech Radar generation
 
