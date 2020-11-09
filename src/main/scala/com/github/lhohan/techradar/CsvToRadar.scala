@@ -156,14 +156,14 @@ trait CsvToRadar {
   }
 
   private def validate(csv: CsvRecordDecoded): Validated[String, CsvRecord] = {
-    val entityMoved = csv.moved match {
+    val moved = csv.moved match {
       case "up"   => Up.valid
       case "down" => Down.valid
       case "none" => NotMoved.valid
       case unsupported =>
         s"CSV record '${csv.name}' in invalid, 'moved' value not supported: '${unsupported}'".invalid
     }
-    val entityQuadrant = csv.quadrant.toLowerCase match {
+    val quadrant = csv.quadrant.toLowerCase match {
       case "languages and frameworks" => ZerothQuadrant.valid
       case "techniques"               => FirstQuadrant.valid
       case "platforms"                => SecondQuadrant.valid
@@ -173,7 +173,7 @@ trait CsvToRadar {
         s"CSV record '${csv.name}' in invalid, 'quadrant' value not supported: '${unsupported}'".invalid
 
     }
-    val entityRing = csv.ring.toLowerCase match {
+    val ring = csv.ring.toLowerCase match {
       case "adopt"  => ZerothRing.valid
       case "trial"  => FirstRing.valid
       case "assess" => SecondRing.valid
@@ -182,7 +182,7 @@ trait CsvToRadar {
         s"CSV record '${csv.name}' in invalid, 'ring' value not supported: '${unsupported}'".invalid
 
     }
-    (entityRing, entityQuadrant, entityMoved).mapN { (r, q, m) =>
+    (ring, quadrant, moved).mapN { (r, q, m) =>
       CsvRecord(Name(csv.name), r, q, m, csv.description)
     }
   }
