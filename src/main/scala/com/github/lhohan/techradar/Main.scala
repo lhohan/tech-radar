@@ -11,7 +11,7 @@ import scala.io.Source
 object Main extends CsvToRadar with App {
 
   val parser = new scopt.OptionParser[Config]("CSV to Radar") {
-    head("CSV to Radar", "0.1.3")
+    head("CSV to Radar", "0.1.4")
 
     opt[File]('t', "target")
       .optional()

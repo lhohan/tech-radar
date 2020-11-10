@@ -184,7 +184,7 @@ trait CsvToRadar {
     }
 
     val name = {
-      val n = if (csv.name.isBlank) {
+      val n = if (csv.name.forall(_.isWhitespace)) {
         s"CSV record '${csv.name}' in invalid, 'name' value should not be blank".invalid
       } else {
         val MaxNameLength = 22 // to fit in radar columns

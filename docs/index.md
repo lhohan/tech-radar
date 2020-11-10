@@ -2,6 +2,13 @@
 
 Generate a static Tech Radar from the command line using a CSV.  
 
+Tested and reported to be working on:
+
+- MacOS
+- Linux
+
+Requires a JDK installation, tested with 1.8 so should work for an JDK with higher version number.
+
 ## Motivation
 
 The Tech Radar is a tool popularized by Thoughtworks's Technology radar. This implementation is based on the Zalando Technology radar.
@@ -19,8 +26,6 @@ Main features:
 1. Generate static HTML.
 
 ## Usage
-
-**Note: this has only been tested in MacOS.**
 
 Download the latest release from [releases](https://github.com/lhohan/tech-radar/releases). 
 
