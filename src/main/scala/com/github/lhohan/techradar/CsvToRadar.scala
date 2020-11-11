@@ -189,7 +189,7 @@ trait CsvToRadar {
       } else {
         val MaxNameLength = 22 // to fit in radar columns
         if (csv.name.length > MaxNameLength) {
-          s"CSV record '${csv.name}' in invalid, 'name' value is too long, should be max $MaxNameLength".invalid
+          s"CSV record '${csv.name}' in invalid, 'name' value is too long, should be max $MaxNameLength is ${csv.name.length}".invalid
         } else {
           csv.name.valid
         }
