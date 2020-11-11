@@ -88,7 +88,7 @@ object Main extends CsvToRadar with App {
           }
         case Valid((warnings, path)) =>
           if (warnings.nonEmpty) {
-            println("Warnings:")
+            println("Warnings (radar blips not shown):")
             warnings.foreach {
               case InvalidInput(msg)    => println(s"  Invalid input      : $msg")
               case DecodingWarning(msg) => println(s"  Failed decoding CSV: $msg")
