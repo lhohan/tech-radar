@@ -42,27 +42,18 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Coursier
-        run: curl -fLo cs https://git.io/coursier-cli-linux &&
-          chmod +x cs
       - run: mkdir -p /home/runner/.ivy2
       - uses: actions/download-artifact@v2
         with:
           name: ivy2
           path: /home/runner/.ivy2/
-      - run: cs bootstrap io.github.lhohan::tech-radar-from-csv:0.+ --standalone -o techradar -f
+      - run: curl -fLo cs https://git.io/coursier-cli-linux &&
+          chmod +x cs &&
+          cs bootstrap io.github.lhohan::tech-radar-from-csv:0.+ --standalone -o techradar -f
       - uses: actions/upload-artifact@master
         with:
          name: techradar
          path: ./techradar
-  cleanup:
-    needs: [build, release]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: geekyeggo/delete-artifact@v1
-      with:
-        name: ivy2
-
   coverage:
     needs: build
     runs-on: ubuntu-latest
