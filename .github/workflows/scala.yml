@@ -19,10 +19,11 @@ jobs:
       # Prepare for release job: transfer artifact
       - name: Publish locally
         run: sbt publishLocal
+      - run: mkdir -p artifacts
       - uses: actions/upload-artifact@master
         with:
-          name: my-artifact
-          path: path/to/artifact
+          name: ivy2
+          path: /home/runner/.ivy2/**
   format:
     runs-on: ubuntu-latest
     needs: build
