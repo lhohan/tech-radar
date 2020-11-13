@@ -9,10 +9,10 @@ lazy val root = (project in file("."))
            |package buildinfo
            |
            |object BuildInfo {
-           |   val version: String = "${version.value}"
-           |   val scalaVersion: String = "${scalaVersion.value}"
-           |   val sbtVersion: String = "${sbtVersion.value}"
-           |   val builtAtMillis: Long = ${System.currentTimeMillis()}L
+           |  val version: String      = "${version.value}"
+           |  val scalaVersion: String = "${scalaVersion.value}"
+           |  val sbtVersion: String   = "${sbtVersion.value}"
+           |  val builtAtMillis: Long  = ${System.currentTimeMillis()}L
            |}
            |""".stripMargin
       )
