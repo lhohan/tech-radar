@@ -18,9 +18,12 @@ jobs:
         run: sbt test
       # Prepare for release job: transfer artifact
       - name: Publish locally
+        if: startsWith(github.ref, 'refs/tags/v')
         run: sbt publishLocal
       - run: mkdir -p artifacts
+        if: startsWith(github.ref, 'refs/tags/v')
       - uses: actions/upload-artifact@master
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: ivy2
           path: /home/runner/.ivy2/**
