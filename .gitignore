@@ -10,3 +10,4 @@ site
 .bsp/
 out/
 techradar
+src/main/scala/buildinfo/
