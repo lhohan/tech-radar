@@ -27,8 +27,10 @@ jobs:
     steps:
       - name: Download Coursier
         run: curl -fLo cs https://git.io/coursier-cli-linux &&
-          chmod +x cs &&
-          ./cs
+          chmod +x cs
+      - name: Publish locally
+        run: sbt publishLocal
+        
   coverage:
     needs: build
     runs-on: ubuntu-latest
