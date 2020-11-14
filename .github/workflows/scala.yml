@@ -15,11 +15,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Run tests
-        run: sbt test
-      # Run quality checks in single step for some speed up
-      - name: Run quality checks
-        run: sbt scalafmtCheckAll coverage test coverageReport
+      - name: Run build commands
+        run: build/build.sh
       - name: Upload to codecov
         run: bash <(curl -s https://codecov.io/bash)
   create-release:
