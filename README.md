@@ -1,4 +1,5 @@
 ![Scala CI](https://github.com/lhohan/time-tracking/workflows/Scala%20CI/badge.svg)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf5691a8653f421cb38997c2aedd7e60)](https://app.codacy.com/gh/lhohan/tech-radar?utm_source=github.com&utm_medium=referral&utm_content=lhohan/tech-radar&utm_campaign=Badge_Grade_Settings)
 [![CodeFactor](https://www.codefactor.io/repository/github/lhohan/tech-radar/badge/main)](https://www.codefactor.io/repository/github/lhohan/tech-radar/overview/main)
 [![codecov](https://codecov.io/gh/lhohan/tech-radar/branch/main/graph/badge.svg?token=54SEP6EL0D)](https://codecov.io/gh/lhohan/tech-radar)
 
