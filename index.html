@@ -54,6 +54,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
         <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#via-curl">Via curl:</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#in-short">In short</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#step-by-step">Step-by-step</a>
@@ -103,6 +105,12 @@
               
                 <h1 id="tech-radar-generation">Tech Radar generation</h1>
 <p>Generate a static Tech Radar from the command line using a CSV.  </p>
+<p>Tested and reported to be working on:</p>
+<ul>
+<li>MacOS</li>
+<li>Linux</li>
+</ul>
+<p>Requires a JDK installation, tested with 1.8 so should work for any JDK with higher version number.</p>
 <h2 id="motivation">Motivation</h2>
 <p>The Tech Radar is a tool popularized by Thoughtworks's Technology radar. This implementation is based on the Zalando Technology radar.</p>
 <p>Thoughtworks provides an online tool to Building Your Own Tech Radar from a CSV file.</p>
@@ -115,8 +123,19 @@
 <li>Generate static HTML.</li>
 </ol>
 <h2 id="usage">Usage</h2>
-<p><strong>Note: this has only been tested in MacOS.</strong></p>
 <p>Download the latest release from <a href="https://github.com/lhohan/tech-radar/releases">releases</a>. </p>
+<h3 id="via-curl">Via curl:</h3>
+<p>Note: for the latest version you may want to check the releases link above.</p>
+<pre><code class="bash">curl -L https://github.com/lhohan/tech-radar/releases/download/v0.2.0/techradar &gt; techradar &amp;&amp; chmod +x techradar  &amp;&amp; ./techradar
+</code></pre>
+
+<p>You should see output similar to:</p>
+<pre><code>Error: Missing option --source
+CSV to Radar 0.2.0
+Usage: CSV to Radar [options]
+
+</code></pre>
+
 <h3 id="in-short">In short</h3>
 <pre><code class="bash">techradar -s example.csv -t out/ -p index_template.html
 </code></pre>
@@ -216,5 +235,5 @@ TypeScript,adopt,languages and frameworks,none,&quot;...&quot;
 
 <!--
 MkDocs version : 1.1.2
-Build Date UTC : 2020-11-09 21:34:47.969348+00:00
+Build Date UTC : 2020-11-14 11:28:49.937019+00:00
 -->
