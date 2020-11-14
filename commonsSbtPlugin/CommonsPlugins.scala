@@ -4,6 +4,7 @@ import io.github.davidgregory084.TpolecatPlugin
 import sbt._
 import sbt.Keys._
 import scalafix.sbt.ScalafixPlugin.autoImport._
+import wartremover.WartRemover.autoImport._
 
 object CommonsPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -13,7 +14,8 @@ object CommonsPlugin extends AutoPlugin {
     commonProjectSettings ++
       libraryDependencySettings ++
       TpolecatPlugin.projectSettings ++
-      scalafixSettings
+      scalafixSettings ++
+      wartremoverSettings
   }
 
   lazy val commonProjectSettings = Seq(
@@ -39,6 +41,17 @@ object CommonsPlugin extends AutoPlugin {
       scalacOptions += "-Wunused",                      // required by `RemoveUnused` rule
       scalacOptions += "-Yrangepos",                    // required by `RemoveUnused` rule
       scalacOptions -= "-Xfatal-warnings"               // Added by tpolecat plugin but will disallow scalafix to run
+    )
+
+  lazy val wartremoverSettings: Seq[Setting[_]] =
+    Seq(
+      wartremoverWarnings ++= Warts.allBut(
+        Wart.Any,
+        Wart.Nothing,
+        Wart.Serializable,
+        Wart.JavaSerializable,
+        Wart.NonUnitStatements
+      )
     )
 }
 
