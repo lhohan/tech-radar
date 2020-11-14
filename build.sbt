@@ -5,7 +5,7 @@ lazy val root = (project in file("."))
       val file = (sourceDirectory in Compile).value / "scala" / "buildinfo" / "BuildInfo.scala"
       IO.write(
         file,
-        s"""
+        s"""//format: off
            |package buildinfo
            |
            |object BuildInfo {
@@ -14,6 +14,7 @@ lazy val root = (project in file("."))
            |  val sbtVersion: String   = "${sbtVersion.value}"
            |  val builtAtMillis: Long  = ${System.currentTimeMillis()}L
            |}
+           |
            |""".stripMargin
       )
       val versionOnlyFile = baseDirectory.value / ".version"
