@@ -17,12 +17,7 @@ lazy val root = (project in file("."))
            |
            |""".stripMargin
       )
-      val versionOnlyFile = baseDirectory.value / ".version"
-      IO.write(
-        versionOnlyFile,
-        version.value
-      )
-      Seq(file, versionOnlyFile)
+      Seq(file)
     },
     compile in Compile := {
       generateBuildInfo.value
