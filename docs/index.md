@@ -7,7 +7,7 @@ Tested and reported to be working on:
 - MacOS
 - Linux
 
-Requires a JDK installation, tested with 1.8 so should work for an JDK with higher version number.
+Requires a JDK installation, tested with 1.8 so should work for any JDK with higher version number.
 
 ## Motivation
 
@@ -28,6 +28,23 @@ Main features:
 ## Usage
 
 Download the latest release from [releases](https://github.com/lhohan/tech-radar/releases). 
+
+### Via curl:
+
+Note: for the latest version you may want to check the releases link above.
+
+```bash
+curl -L https://github.com/lhohan/tech-radar/releases/download/v0.2.0/techradar > techradar && chmod +x techradar  && ./techradar
+```
+
+You should see output similar to:
+
+```
+Error: Missing option --source
+CSV to Radar 0.2.0
+Usage: CSV to Radar [options]
+
+```
 
 ### In short
 
