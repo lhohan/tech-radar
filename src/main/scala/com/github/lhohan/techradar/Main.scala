@@ -3,6 +3,7 @@ package com.github.lhohan.techradar
 import java.io.File
 import java.nio.file.Files
 
+import buildinfo.BuildInfo
 import cats.data.Validated.{Invalid, Valid}
 import com.github.lhohan.techradar.CsvToRadar.{DecodingWarning, InvalidInput, NoRadarBlips}
 
@@ -11,7 +12,7 @@ import scala.io.Source
 object Main extends CsvToRadar with App {
 
   val parser = new scopt.OptionParser[Config]("CSV to Radar") {
-    head("CSV to Radar", "0.1.4")
+    head("CSV to Radar", BuildInfo.version)
 
     opt[File]('t', "target")
       .optional()

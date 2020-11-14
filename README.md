@@ -20,13 +20,10 @@ sbt "run -s src/test/resources/example.csv -t out/ -p src/main/resources/index_t
 
 ### Releasing
 
-Until automated the manual steps how to release (mostly for my own reference):
+The executable is build using Coursier. See the build script for details.
 
-- Update the version where needed
-- Commit an push
-- Publish locally
-- Use Coursier to build the executable, e.g. `cs bootstrap io.github.lhohan::tech-radar-from-csv:0.1.1 --standalone -o techradar -f`
-- Upload the release for the version
+To release push a new tag starting with `v`, the build pipeline, if successful, 
+will then publish a new release based on this tag.
 
 ### Documentation
 
