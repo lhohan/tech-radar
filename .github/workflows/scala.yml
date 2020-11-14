@@ -24,16 +24,12 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      #   If version is v1+ (more accurately not v0+, quick fix) we fail, coursier step below needs updating
+      #   If version is v1+ (more accurately not v0+, quick fix) we fail, Coursier step below needs updating
       - run: exit 1
         if: startsWith(github.ref, 'refs/tags/v1')
       - uses: actions/checkout@v2
-      - name: Publish locally
-        run: sbt publishLocal
-        # '0.+' will keep on working until 1.x is released
-      - run: curl -fLo cs https://git.io/coursier-cli-linux &&
-          chmod +x cs &&
-          ./cs bootstrap io.github.lhohan::tech-radar-from-csv:0.+ --standalone -o techradar -f
+      - name: Create release executable
+        run: build/create-executable.sh
       - uses: ncipollo/release-action@v1
         with:
           artifacts: ./techradar

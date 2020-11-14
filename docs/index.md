@@ -34,7 +34,7 @@ Download the latest release from [releases](https://github.com/lhohan/tech-radar
 Note: for the latest version you may want to check the releases link above.
 
 ```bash
-curl -L https://github.com/lhohan/tech-radar/releases/download/v0.2.0/techradar > techradar && chmod +x techradar  && ./techradar
+curl -LO https://github.com/lhohan/tech-radar/releases/download/v0.2.0/techradar  && chmod +x techradar  && ./techradar
 ```
 
 You should see output similar to:
