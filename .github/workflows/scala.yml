@@ -49,7 +49,7 @@ jobs:
           path: /home/runner/.ivy2/
       - run: curl -fLo cs https://git.io/coursier-cli-linux &&
           chmod +x cs &&
-          cs bootstrap io.github.lhohan::tech-radar-from-csv:0.+ --standalone -o techradar -f
+          ./cs bootstrap io.github.lhohan::tech-radar-from-csv:0.+ --standalone -o techradar -f
       - uses: actions/upload-artifact@master
         with:
          name: techradar
