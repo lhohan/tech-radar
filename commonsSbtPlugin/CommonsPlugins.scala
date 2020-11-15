@@ -15,7 +15,8 @@ object CommonsPlugin extends AutoPlugin {
       libraryDependencySettings ++
       TpolecatPlugin.projectSettings ++
       scalafixSettings ++
-      wartremoverSettings
+      wartremoverSettings ++
+      reportingSettings
   }
 
   lazy val commonProjectSettings = Seq(
@@ -52,6 +53,52 @@ object CommonsPlugin extends AutoPlugin {
         Wart.JavaSerializable,
         Wart.NonUnitStatements
       )
+    )
+
+  lazy val reportingSettings: Seq[Setting[_]] =
+    Seq(
+      extraLoggers := {
+        import org.apache.logging.log4j.core.LogEvent;
+        import org.apache.logging.log4j.core.appender.AbstractAppender
+        import org.apache.logging.log4j.message.{Message,ObjectMessage}
+
+        import sbt.internal.util.StringEvent
+
+        def loggerNameForKey( key : sbt.Def.ScopedKey[_] ) = s"""reverse.${key.scope.task.toOption.getOrElse("<unknown>")}"""
+
+        class ReverseConsoleAppender( key : ScopedKey[_] ) extends AbstractAppender (
+          loggerNameForKey( key ), // name : String
+          null,                    // filter : org.apache.logging.log4j.core.Filter
+          null,                    // layout : org.apache.logging.log4j.core.Layout[ _ <: Serializable]
+          false                    // ignoreExceptions : Boolean
+        ) {
+
+          this.start() // the log4j2 Appender must be started, or it will fail with an Exception
+
+          override def append( event : LogEvent ) : Unit = {
+            val output = {
+              def forUnexpected( message : Message ) = s"[${this.getName()}] Unexpected: ${message.getFormattedMessage()}"
+              event.getMessage() match {
+                case om : ObjectMessage => { // what we expect
+                  om.getParameter() match {
+                    case se : StringEvent => s"[${this.getName()} - ${se.level}] ${se.message.reverse}"
+                    case other            => forUnexpected( om )
+                  }
+                }
+                case unexpected : Message => forUnexpected( unexpected )
+              }
+            }
+            System.out.synchronized { // sbt adopts a convention of acquiring System.out's monitor printing to the console
+              println( output )
+            }
+          }
+        }
+
+        val currentFunction = extraLoggers.value
+        (key: ScopedKey[_]) => {
+          new ReverseConsoleAppender(key) +: currentFunction(key)
+        }
+      }
     )
 }
 
