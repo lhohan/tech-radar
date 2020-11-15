@@ -3,7 +3,6 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/lhohan/tech-radar/badge/main)](https://www.codefactor.io/repository/github/lhohan/tech-radar/overview/main)
 [![codecov](https://codecov.io/gh/lhohan/tech-radar/branch/main/graph/badge.svg?token=54SEP6EL0D)](https://codecov.io/gh/lhohan/tech-radar)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e0f110457584346971ff/maintainability)](https://codeclimate.com/github/lhohan/tech-radar/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/e0f110457584346971ff/test_coverage)](https://codeclimate.com/github/lhohan/tech-radar/test_coverage)
 
 # Tech Radar generation
 
