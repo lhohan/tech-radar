@@ -72,7 +72,7 @@ object CommonsPlugin extends AutoPlugin {
 
       def process(violations: Seq[CheckViolation]): Unit = {
         import scalatags.Text.all._
-        
+
         val reportFileHtml   = (baseDirectory.value / "target" / "compiler-report.html").toPath
         val fileToViolations = violations.groupBy(_.file)
         val overviewRows =
@@ -85,18 +85,29 @@ object CommonsPlugin extends AutoPlugin {
         val projectTitle   = b(id := "project-name", s"Project: $projectName")
         val summaryHeading = h2(id := "summary", s"Summary")
         val summaryOverview =
-          table(tr(th("Files"), th("Warnings")), tr(td(overviewRows.size), td(violations.size)))
+          table(tr(th("Files"), th("Warnings")), tr(td(overviewRows.size - 1), td(violations.size)))
         val filesHeading = h2(id := "files", s"Files")
         val rulesHeading = h2(id := "rules", s"Rules")
         val rulesOverView = table(
           tr(th("Rule")(textAlign := "left"), th("Warnings")) +:
-          violations.groupBy(_.rule).mapValues(_.size).toList.sortBy(_._1).map{ case (rule, count) =>
-            tr(td(rule), td(count)(textAlign := "center"))
-          }
+            violations.groupBy(_.rule).mapValues(_.size).toList.sortBy(_._1).map {
+              case (rule, count) =>
+                tr(td(rule), td(count)(textAlign := "center"))
+            }
         )
-        val filesOverview   = table(overviewRows)
-        val detailsHeading  = h2(id := "details", s"Details")
-        val detailsOverview = table(overviewRows)
+        val filesOverview  = table(overviewRows)
+        val detailsHeading = h2(id := "details", s"Details")
+        val detailsOverview = fileToViolations.toList.sortBy(_._1).map { case (file, violations) =>
+          div(
+            h3(file)(id := file.replace('/', '.')),
+            table(
+              tr(th("rule"), th("line"))
+                +: violations.map { violation =>
+                  tr(td(violation.rule), td(violation.line))
+                }
+            )
+          )
+        }
 
         val page = html(
           body(
@@ -108,7 +119,8 @@ object CommonsPlugin extends AutoPlugin {
             filesOverview,
             rulesHeading,
             rulesOverView,
-            detailsHeading
+            detailsHeading,
+            detailsOverview
           )
         )
         Files.write(reportFileHtml, page.toString().getBytes(StandardCharsets.UTF_8))
