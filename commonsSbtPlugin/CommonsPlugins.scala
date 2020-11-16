@@ -24,7 +24,7 @@ object CommonsPlugin extends AutoPlugin {
       wartremoverSettings
   }
 
-  lazy val checkCompilerReport = taskKey[Unit]("Prints static code analysis report from compiler")
+  lazy val checkCompilerReport    = taskKey[Unit]("Prints static code analysis report from compiler")
   lazy val checkCompilerThreshold = taskKey[Int]("Set threshold to fail on if above this number")
 
   import CompilerReporting._
@@ -35,7 +35,7 @@ object CommonsPlugin extends AutoPlugin {
     checkCompilerThreshold := Int.MaxValue,
     checkCompilerReport := {
       val VerboseOutput = true // TODO ??? make setting
-      val projectName = name.value
+      val projectName   = name.value
 
       def readViolations(): Seq[CheckViolation] = {
         val scalaSourcePath = Paths.get((Compile / scalaSource).value.toString)
@@ -72,31 +72,52 @@ object CommonsPlugin extends AutoPlugin {
 
       def process(violations: Seq[CheckViolation]): Unit = {
         import scalatags.Text.all._
+        
+        val reportFileHtml   = (baseDirectory.value / "target" / "compiler-report.html").toPath
+        val fileToViolations = violations.groupBy(_.file)
+        val overviewRows =
+          tr(th("File")(textAlign := "left"), th("Warnings")) +:
+            fileToViolations.mapValues(_.size).toList.map { case (file, count) =>
+              tr(td(file), td(count)(textAlign := "center"))
+            }
 
-        val reportFileHtml = (baseDirectory.value / "target" / "compiler-report.html").toPath
-        val rows = tr(th("File")(textAlign := "left"), th("Warnings")) +: violations.
-          groupBy(_.file).
-          mapValues(_.size).
-          toList.map{case (file, count) => tr(td(file),td(count)(textAlign := "center"))}
-        val reportHeading = h1("Compiler report")
-        val projectTitle = b(id:= "project-name", s"Project: $projectName")
-        val summaryHeading = h2(id:= "summary", s"Summary")
-        val filesHeading = h2(id:= "files", s"Files")
-        val detailsHeading = h2(id:= "details", s"Details")
-        val filesOverview = table(rows)
+        val reportHeading  = h1("Compiler report")
+        val projectTitle   = b(id := "project-name", s"Project: $projectName")
+        val summaryHeading = h2(id := "summary", s"Summary")
+        val summaryOverview =
+          table(tr(th("Files"), th("Warnings")), tr(td(overviewRows.size), td(violations.size)))
+        val filesHeading = h2(id := "files", s"Files")
+        val rulesHeading = h2(id := "rules", s"Rules")
+        val rulesOverView = table(
+          tr(th("Rule")(textAlign := "left"), th("Warnings")) +:
+          violations.groupBy(_.rule).mapValues(_.size).toList.sortBy(_._1).map{ case (rule, count) =>
+            tr(td(rule), td(count)(textAlign := "center"))
+          }
+        )
+        val filesOverview   = table(overviewRows)
+        val detailsHeading  = h2(id := "details", s"Details")
+        val detailsOverview = table(overviewRows)
+
         val page = html(
-          reportHeading,
-          projectTitle,
-          summaryHeading,
-          filesHeading,
-          filesOverview,
-          detailsHeading
+          body(
+            reportHeading,
+            projectTitle,
+            summaryHeading,
+            summaryOverview,
+            filesHeading,
+            filesOverview,
+            rulesHeading,
+            rulesOverView,
+            detailsHeading
+          )
         )
         Files.write(reportFileHtml, page.toString().getBytes(StandardCharsets.UTF_8))
         println(s"Compile report written to ${reportFileHtml.toString}")
         val threshold = checkCompilerThreshold.value
-        if(violations.size > threshold){
-          throw new MessageOnlyException(s"Check compiler threshold exceed, threshold is ${threshold}, number of violations: ${violations.size}")
+        if (violations.size > threshold) {
+          throw new MessageOnlyException(
+            s"Check compiler threshold exceed, threshold is ${threshold}, number of violations: ${violations.size}"
+          )
         }
       }
 
