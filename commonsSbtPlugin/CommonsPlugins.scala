@@ -42,7 +42,7 @@ object CommonsPlugin extends AutoPlugin {
         val regex           = raw"\[(.+)\] (.+):(\d+):(\d+): (.+)".r
         println("Running static code analysis report. This may take a while ...")
         val violations = new ListBuffer[CheckViolation]()
-        "sbt clean compile" ! ProcessLogger(
+        "sbt clean compile" ! ProcessLogger( // TODO: this will not work for sub projects
           { x =>
             if (VerboseOutput) {
               println(s"$x")
@@ -75,9 +75,9 @@ object CommonsPlugin extends AutoPlugin {
 
         val reportFileHtml   = (baseDirectory.value / "target" / "compiler-report.html").toPath
         val fileToViolations = violations.groupBy(_.file)
-        val overviewRows =
+        val filesOverviewRows =
           tr(th("File")(textAlign := "left"), th("Warnings")) +:
-            fileToViolations.mapValues(_.size).toList.map { case (file, count) =>
+            fileToViolations.mapValues(_.size).toList.sortBy(_._1).map { case (file, count) =>
               tr(td(file), td(count)(textAlign := "center"))
             }
 
@@ -85,7 +85,7 @@ object CommonsPlugin extends AutoPlugin {
         val projectTitle   = b(id := "project-name", s"Project: $projectName")
         val summaryHeading = h2(id := "summary", s"Summary")
         val summaryOverview =
-          table(tr(th("Files"), th("Warnings")), tr(td(overviewRows.size - 1), td(violations.size)))
+          table(tr(th("Files"), th("Warnings")), tr(td(filesOverviewRows.size - 1), td(violations.size)))
         val filesHeading = h2(id := "files", s"Files")
         val rulesHeading = h2(id := "rules", s"Rules")
         val rulesOverView = table(
@@ -95,14 +95,14 @@ object CommonsPlugin extends AutoPlugin {
                 tr(td(rule), td(count)(textAlign := "center"))
             }
         )
-        val filesOverview  = table(overviewRows)
+        val filesOverview  = table(filesOverviewRows)
         val detailsHeading = h2(id := "details", s"Details")
         val detailsOverview = fileToViolations.toList.sortBy(_._1).map { case (file, violations) =>
           div(
             h3(file)(id := file.replace('/', '.')),
             table(
-              tr(th("rule"), th("line"))
-                +: violations.map { violation =>
+              tr(th("Rule")(textAlign := "left"), th("line"))
+                +: violations.sortBy(_.line).map { violation =>
                   tr(td(violation.rule), td(violation.line))
                 }
             )
