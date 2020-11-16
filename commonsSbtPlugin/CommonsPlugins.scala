@@ -24,17 +24,18 @@ object CommonsPlugin extends AutoPlugin {
       wartremoverSettings
   }
 
-  lazy val staticCompilerReport = taskKey[Unit]("Prints static code analysis report from compiler")
+  lazy val checkCompilerReport = taskKey[Unit]("Prints static code analysis report from compiler")
+  lazy val checkCompilerThreshold = taskKey[Int]("Set threshold to fail on if above this number")
 
   import CompilerReporting._
   lazy val commonProjectSettings = Seq(
     scalaVersion := "2.13.3",
     organization := "io.github.lhohan",
     organizationName := "Hans L'Hoest",
-    staticCompilerReport := {
+    checkCompilerThreshold := Int.MaxValue,
+    checkCompilerReport := {
       val VerboseOutput = true // TODO ??? make setting
       val projectName = name.value
-      println("project name is " + projectName)
 
       def readViolations(): Seq[CheckViolation] = {
         val scalaSourcePath = Paths.get((Compile / scalaSource).value.toString)
@@ -72,20 +73,31 @@ object CommonsPlugin extends AutoPlugin {
       def process(violations: Seq[CheckViolation]): Unit = {
         import scalatags.Text.all._
 
-        val value1 = (baseDirectory.value / "target" / "compiler-report.html").toPath
+        val reportFileHtml = (baseDirectory.value / "target" / "compiler-report.html").toPath
         val rows = tr(th("File")(textAlign := "left"), th("Warnings")) +: violations.
           groupBy(_.file).
           mapValues(_.size).
           toList.map{case (file, count) => tr(td(file),td(count)(textAlign := "center"))}
-        val reportTitle = h1("Compiler report")
-        val projectTitle = h2(id:= "project-name", projectName)
-        val overview = table(rows)(borderWidth := 1, borderStyle := "solid")
+        val reportHeading = h1("Compiler report")
+        val projectTitle = b(id:= "project-name", s"Project: $projectName")
+        val summaryHeading = h2(id:= "summary", s"Summary")
+        val filesHeading = h2(id:= "files", s"Files")
+        val detailsHeading = h2(id:= "details", s"Details")
+        val filesOverview = table(rows)
         val page = html(
-          reportTitle,
+          reportHeading,
           projectTitle,
-          overview
+          summaryHeading,
+          filesHeading,
+          filesOverview,
+          detailsHeading
         )
-        Files.write(value1, page.toString().getBytes(StandardCharsets.UTF_8))
+        Files.write(reportFileHtml, page.toString().getBytes(StandardCharsets.UTF_8))
+        println(s"Compile report written to ${reportFileHtml.toString}")
+        val threshold = checkCompilerThreshold.value
+        if(violations.size > threshold){
+          throw new MessageOnlyException(s"Check compiler threshold exceed, threshold is ${threshold}, number of violations: ${violations.size}")
+        }
       }
 
       val violations = readViolations()
