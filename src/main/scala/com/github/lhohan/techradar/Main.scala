@@ -4,8 +4,11 @@ import java.io.File
 import java.nio.file.Files
 
 import buildinfo.BuildInfo
-import cats.data.Validated.{Invalid, Valid}
-import com.github.lhohan.techradar.CsvToRadar.{DecodingWarning, InvalidInput, NoRadarBlips}
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
+import com.github.lhohan.techradar.CsvToRadar.DecodingWarning
+import com.github.lhohan.techradar.CsvToRadar.InvalidInput
+import com.github.lhohan.techradar.CsvToRadar.NoRadarBlips
 
 import scala.io.Source
 
