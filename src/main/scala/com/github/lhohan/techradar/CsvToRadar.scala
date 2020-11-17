@@ -160,7 +160,7 @@ trait CsvToRadar {
       case "up"   => Up.valid
       case "down" => Down.valid
       case "none" => NotMoved.valid
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'moved' value not supported: '${unsupported}'".invalid
     }
     val quadrant = csv.quadrant.toLowerCase match {
@@ -168,8 +168,7 @@ trait CsvToRadar {
       case "techniques"               => FirstQuadrant.valid
       case "platforms"                => SecondQuadrant.valid
       case "tools"                    => ThirdQuadrant.valid
-
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'quadrant' value not supported: '${unsupported}'".invalid
 
     }
@@ -178,7 +177,7 @@ trait CsvToRadar {
       case "trial"  => FirstRing.valid
       case "assess" => SecondRing.valid
       case "hold"   => ThirdRing.valid
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'ring' value not supported: '${unsupported}'".invalid
 
     }
