@@ -3,7 +3,8 @@ package com.github.lhohan.techradar
 import java.nio.file.Paths
 
 import cats.data.Chain
-import cats.data.Validated.{Invalid, Valid}
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
 import com.github.lhohan.techradar.CsvToRadar.NoRadarBlips
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

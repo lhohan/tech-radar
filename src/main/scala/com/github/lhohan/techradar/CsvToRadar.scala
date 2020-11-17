@@ -13,32 +13,33 @@ import java.nio.file.Path
 import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 
-import cats.data.Validated.{Invalid, Valid}
-import cats.data.{NonEmptyChain, Validated, ValidatedNec}
-import com.github.lhohan.techradar.CsvToRadar.{
-  ConversionResult,
-  ConversionWarning,
-  CsvRecordDecoded,
-  CsvRecord,
-  DecodingWarning,
-  Down,
-  FirstQuadrant,
-  FirstRing,
-  InvalidInput,
-  JsonEntity,
-  JsonResult,
-  Name,
-  NoRadarBlips,
-  NotMoved,
-  ReferenceTableResult,
-  SecondQuadrant,
-  SecondRing,
-  ThirdQuadrant,
-  ThirdRing,
-  Up,
-  ZerothQuadrant,
-  ZerothRing
-}
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
+import cats.data.NonEmptyChain
+import cats.data.Validated
+import cats.data.ValidatedNec
+import com.github.lhohan.techradar.CsvToRadar.ConversionResult
+import com.github.lhohan.techradar.CsvToRadar.ConversionWarning
+import com.github.lhohan.techradar.CsvToRadar.CsvRecordDecoded
+import com.github.lhohan.techradar.CsvToRadar.CsvRecord
+import com.github.lhohan.techradar.CsvToRadar.DecodingWarning
+import com.github.lhohan.techradar.CsvToRadar.Down
+import com.github.lhohan.techradar.CsvToRadar.FirstQuadrant
+import com.github.lhohan.techradar.CsvToRadar.FirstRing
+import com.github.lhohan.techradar.CsvToRadar.InvalidInput
+import com.github.lhohan.techradar.CsvToRadar.JsonEntity
+import com.github.lhohan.techradar.CsvToRadar.JsonResult
+import com.github.lhohan.techradar.CsvToRadar.Name
+import com.github.lhohan.techradar.CsvToRadar.NoRadarBlips
+import com.github.lhohan.techradar.CsvToRadar.NotMoved
+import com.github.lhohan.techradar.CsvToRadar.ReferenceTableResult
+import com.github.lhohan.techradar.CsvToRadar.SecondQuadrant
+import com.github.lhohan.techradar.CsvToRadar.SecondRing
+import com.github.lhohan.techradar.CsvToRadar.ThirdQuadrant
+import com.github.lhohan.techradar.CsvToRadar.ThirdRing
+import com.github.lhohan.techradar.CsvToRadar.Up
+import com.github.lhohan.techradar.CsvToRadar.ZerothQuadrant
+import com.github.lhohan.techradar.CsvToRadar.ZerothRing
 
 object CsvToRadar extends CsvToRadar {
 
@@ -160,7 +161,7 @@ trait CsvToRadar {
       case "up"   => Up.valid
       case "down" => Down.valid
       case "none" => NotMoved.valid
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'moved' value not supported: '${unsupported}'".invalid
     }
     val quadrant = csv.quadrant.toLowerCase match {
@@ -168,8 +169,7 @@ trait CsvToRadar {
       case "techniques"               => FirstQuadrant.valid
       case "platforms"                => SecondQuadrant.valid
       case "tools"                    => ThirdQuadrant.valid
-
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'quadrant' value not supported: '${unsupported}'".invalid
 
     }
@@ -178,7 +178,7 @@ trait CsvToRadar {
       case "trial"  => FirstRing.valid
       case "assess" => SecondRing.valid
       case "hold"   => ThirdRing.valid
-      case unsupported =>
+      case unsupported: Any =>
         s"CSV record '${csv.name}' in invalid, 'ring' value not supported: '${unsupported}'".invalid
 
     }
@@ -271,9 +271,9 @@ trait CsvToRadar {
 
   private def generateId(s: String): String = {
     s.collect {
-      case ' '                    => '-'
-      case '-'                    => '-'
-      case c if c.isLetterOrDigit => c
+      case ' '                          => '-'
+      case '-'                          => '-'
+      case c: Char if c.isLetterOrDigit => c
     }.toLowerCase
   }
 
