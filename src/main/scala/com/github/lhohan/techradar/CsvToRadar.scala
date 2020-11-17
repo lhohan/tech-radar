@@ -271,9 +271,9 @@ trait CsvToRadar {
 
   private def generateId(s: String): String = {
     s.collect {
-      case ' '                    => '-'
-      case '-'                    => '-'
-      case c if c.isLetterOrDigit => c
+      case ' '                          => '-'
+      case '-'                          => '-'
+      case c: Char if c.isLetterOrDigit => c
     }.toLowerCase
   }
 
