@@ -26,7 +26,6 @@ import com.github.lhohan.techradar.CsvToRadar.DecodingWarning
 import com.github.lhohan.techradar.CsvToRadar.Down
 import com.github.lhohan.techradar.CsvToRadar.FirstQuadrant
 import com.github.lhohan.techradar.CsvToRadar.FirstRing
-import com.github.lhohan.techradar.CsvToRadar.InvalidInput
 import com.github.lhohan.techradar.CsvToRadar.JsonEntity
 import com.github.lhohan.techradar.CsvToRadar.JsonResult
 import com.github.lhohan.techradar.CsvToRadar.Name
@@ -72,6 +71,7 @@ object CsvToRadar extends CsvToRadar {
 
   case class CsvRecord(
       name: Name,
+      shortName: Name,
       ring: Ring,
       quadrant: Quadrant,
       moved: Moved,
@@ -93,7 +93,6 @@ object CsvToRadar extends CsvToRadar {
   // Warnings are non-fatal: they still allow to produce a result.
   sealed trait ConversionWarning
   case class DecodingWarning(msg: String) extends ConversionWarning
-  case class InvalidInput(msg: String)    extends ConversionWarning
 
   // Error are fatal: they block reporting of a result.
   sealed trait ConversionError
@@ -143,8 +142,7 @@ trait CsvToRadar {
           x match {
             case Right(csv) =>
               validate(csv) match {
-                case Invalid(errorMsg) => (csvs, warnings :+ InvalidInput(errorMsg))
-                case Valid(csv)        => (csvs :+ csv, warnings)
+                case Valid(csv) => (csvs :+ csv, warnings)
               }
             case Left(warning) => (csvs, warnings :+ DecodingWarning(warning.getMessage))
           }
@@ -183,22 +181,26 @@ trait CsvToRadar {
 
     }
 
-    val name = {
-      val n = if (csv.name.forall(_.isWhitespace)) {
+    val names = {
+      val ns = if (csv.name.forall(_.isWhitespace)) {
         s"CSV record '${csv.name}' in invalid, 'name' value should not be blank".invalid
       } else {
         val MaxNameLength = 22 // to fit in radar columns
         if (csv.name.length > MaxNameLength) {
-          s"CSV record '${csv.name}' in invalid, 'name' value is too long, should be max $MaxNameLength is ${csv.name.length}".invalid
+          println(
+            s"Warning: auto-truncated name of CSV record with name '${csv.name}' to $MaxNameLength (was ${csv.name.length})."
+          )
+          val truncated = csv.name.take(MaxNameLength - 3) + "..."
+          (csv.name, truncated).valid
         } else {
-          csv.name.valid
+          (csv.name, csv.name).valid
         }
       }
-      n.map(Name)
+      ns.map { case (n, n2) => (Name(n), Name(n2)) }
     }
 
-    (name, ring, quadrant, moved).mapN { (n, r, q, m) =>
-      CsvRecord(n, r, q, m, csv.description)
+    (names, ring, quadrant, moved).mapN { case ((n, n2), r, q, m) =>
+      CsvRecord(n, n2, r, q, m, csv.description)
     }
   }
 
@@ -220,7 +222,7 @@ trait CsvToRadar {
       case SecondRing => 2
       case ThirdRing  => 3
     }
-    JsonEntity(csv.name.value, entityRing, entityQuadrant, entityMoved)
+    JsonEntity(csv.shortName.value, entityRing, entityQuadrant, entityMoved)
   }
 
   private def toJson(csvRecords: NonEmptyChain[CsvRecord]): JsonResult = {
@@ -231,7 +233,7 @@ trait CsvToRadar {
         "quadrant" -> ujson.Num(entity.quadrant),
         "ring"     -> ujson.Num(entity.ring),
         "moved"    -> ujson.Num(entity.moved),
-        "link"     -> ujson.Str("#" + generateId(entity.label)),
+        "link"     -> ujson.Str("#" + generateId(record.name.value)),
         "active"   -> ujson.Bool(entity.active)
       )
     }.toList

@@ -7,7 +7,6 @@ import buildinfo.BuildInfo
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
 import com.github.lhohan.techradar.CsvToRadar.DecodingWarning
-import com.github.lhohan.techradar.CsvToRadar.InvalidInput
 import com.github.lhohan.techradar.CsvToRadar.NoRadarBlips
 
 import scala.io.Source
@@ -93,9 +92,8 @@ object Main extends CsvToRadar with App {
         case Valid((warnings, path)) =>
           if (warnings.nonEmpty) {
             println("Warnings (radar blips not shown):")
-            warnings.foreach {
-              case InvalidInput(msg)    => println(s"  Invalid input      : $msg")
-              case DecodingWarning(msg) => println(s"  Failed decoding CSV: $msg")
+            warnings.foreach { case DecodingWarning(msg) =>
+              println(s"  Failed decoding CSV: $msg")
             }
             println()
           }
