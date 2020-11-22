@@ -20,12 +20,13 @@ import cats.data.Validated
 import cats.data.ValidatedNec
 import com.github.lhohan.techradar.CsvToRadar.ConversionResult
 import com.github.lhohan.techradar.CsvToRadar.ConversionWarning
-import com.github.lhohan.techradar.CsvToRadar.CsvRecordDecoded
 import com.github.lhohan.techradar.CsvToRadar.CsvRecord
+import com.github.lhohan.techradar.CsvToRadar.CsvRecordDecoded
 import com.github.lhohan.techradar.CsvToRadar.DecodingWarning
 import com.github.lhohan.techradar.CsvToRadar.Down
 import com.github.lhohan.techradar.CsvToRadar.FirstQuadrant
 import com.github.lhohan.techradar.CsvToRadar.FirstRing
+import com.github.lhohan.techradar.CsvToRadar.InvalidInput
 import com.github.lhohan.techradar.CsvToRadar.JsonEntity
 import com.github.lhohan.techradar.CsvToRadar.JsonResult
 import com.github.lhohan.techradar.CsvToRadar.Name
@@ -96,7 +97,8 @@ object CsvToRadar extends CsvToRadar {
 
   // Error are fatal: they block reporting of a result.
   sealed trait ConversionError
-  case object NoRadarBlips extends ConversionError
+  case class InvalidInput(msg: String) extends ConversionWarning
+  case object NoRadarBlips             extends ConversionError
 
   type ConversionResult[A] = ValidatedNec[ConversionError, A]
 }
@@ -142,7 +144,8 @@ trait CsvToRadar {
           x match {
             case Right(csv) =>
               validate(csv) match {
-                case Valid(csv) => (csvs :+ csv, warnings)
+                case Valid(csv)        => (csvs :+ csv, warnings)
+                case Invalid(errorMsg) => (csvs, warnings :+ InvalidInput(errorMsg))
               }
             case Left(warning) => (csvs, warnings :+ DecodingWarning(warning.getMessage))
           }
