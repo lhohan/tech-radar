@@ -95,7 +95,7 @@ object CsvToRadar extends CsvToRadar {
   case class DecodingWarning(msg: String) extends ConversionWarning
   case class InvalidInput(msg: String)    extends ConversionWarning
 
-  // Error are fatal: the block reporting of a result.
+  // Error are fatal: they block reporting of a result.
   sealed trait ConversionError
   case object NoRadarBlips extends ConversionError
 
