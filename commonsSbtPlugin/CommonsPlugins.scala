@@ -1,10 +1,16 @@
 package io.github.lhohan.sbtcommons
 
+import java.nio.charset.StandardCharsets
+
 import io.github.davidgregory084.TpolecatPlugin
+import java.nio.file._
 import sbt._
 import sbt.Keys._
 import scalafix.sbt.ScalafixPlugin.autoImport._
 import wartremover.WartRemover.autoImport._
+import scala.collection.mutable.ListBuffer
+import scala.sys.process.ProcessLogger
+import sys.process._
 
 object CommonsPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -15,14 +21,123 @@ object CommonsPlugin extends AutoPlugin {
       libraryDependencySettings ++
       TpolecatPlugin.projectSettings ++
       scalafixSettings ++
-      wartremoverSettings ++
-      reportingSettings
+      wartremoverSettings
   }
 
+  lazy val checkCompilerReport    = taskKey[Unit]("Prints static code analysis report from compiler")
+  lazy val checkCompilerThreshold = taskKey[Int]("Set threshold to fail on if above this number")
+
+  import CompilerReporting._
   lazy val commonProjectSettings = Seq(
     scalaVersion := "2.13.3",
     organization := "io.github.lhohan",
-    organizationName := "Hans L'Hoest"
+    organizationName := "Hans L'Hoest",
+    checkCompilerThreshold := Int.MaxValue,
+    checkCompilerReport := {
+      val VerboseOutput = true // TODO ??? make setting
+      val projectName   = name.value
+
+      def readViolations(): Seq[CheckViolation] = {
+        val scalaSourcePath = Paths.get((Compile / scalaSource).value.toString)
+        val regex           = raw"\[(.+)\] (.+):(\d+):(\d+): (.+)".r
+        println("Running static code analysis report. This may take a while ...")
+        val violations = new ListBuffer[CheckViolation]()
+        "sbt clean compile" ! ProcessLogger( // TODO: this will not work for sub projects
+          { x =>
+            if (VerboseOutput) {
+              println(s"$x")
+            }
+            x match {
+              case regex(sev, file, line, pos, rule) =>
+                val filePath = Paths.get(file)
+                val f = {
+                  if (filePath.startsWith(scalaSourcePath)) scalaSourcePath.relativize(filePath)
+                  else filePath
+                }.toString
+                violations += CheckViolation(
+                  f,
+                  Severity(sev),
+                  rule,
+                  filePath,
+                  line = line.toInt,
+                  position = pos.toInt
+                )
+              case _ => // OK not a compiler warning
+            }
+          },
+          sys.error(_)
+        )
+        violations.toSeq
+      }
+
+      def process(violations: Seq[CheckViolation]): Unit = {
+        import scalatags.Text.all._
+
+        val reportFileHtml   = (baseDirectory.value / "target" / "compiler-report.html").toPath
+        val fileToViolations = violations.groupBy(_.file)
+        val filesOverviewRows =
+          tr(th("File")(textAlign := "left"), th("Warnings")) +:
+            fileToViolations.mapValues(_.size).toList.sortBy(_._1).map { case (file, count) =>
+              tr(td(file), td(count)(textAlign := "center"))
+            }
+
+        val reportHeading  = h1("Compiler report")
+        val projectTitle   = b(id := "project-name", s"Project: $projectName")
+        val summaryHeading = h2(id := "summary", s"Summary")
+        val summaryOverview =
+          table(tr(th("Files"), th("Warnings")), tr(td(filesOverviewRows.size - 1), td(violations.size)))
+        val filesHeading = h2(id := "files", s"Files")
+        val rulesHeading = h2(id := "rules", s"Rules")
+        val rulesOverView = table(
+          tr(th("Rule")(textAlign := "left"), th("Warnings")) +:
+            violations.groupBy(_.rule).mapValues(_.size).toList.sortBy(_._1).map {
+              case (rule, count) =>
+                tr(td(rule), td(count)(textAlign := "center"))
+            }
+        )
+        val filesOverview  = table(filesOverviewRows)
+        val detailsHeading = h2(id := "details", s"Details")
+        val detailsOverview = fileToViolations.toList.sortBy(_._1).map { case (file, violations) =>
+          div(
+            h3(file)(id := file.replace('/', '.')),
+            table(
+              tr(th("Rule")(textAlign := "left"), th("line"))
+                +: violations.sortBy(_.line).map { violation =>
+                  tr(td(violation.rule), td(violation.line))
+                }
+            )
+          )
+        }
+
+        val page = html(
+          body(
+            reportHeading,
+            projectTitle,
+            summaryHeading,
+            summaryOverview,
+            filesHeading,
+            filesOverview,
+            rulesHeading,
+            rulesOverView,
+            detailsHeading,
+            detailsOverview
+          )
+        )
+        Files.write(reportFileHtml, page.toString().getBytes(StandardCharsets.UTF_8))
+        println(s"Compile report written to ${reportFileHtml.toString}")
+        val threshold = checkCompilerThreshold.value
+        if (violations.size > threshold) {
+          throw new MessageOnlyException(
+            s"Check compiler threshold exceed, threshold is ${threshold}, number of violations: ${violations.size}"
+          )
+        }
+      }
+
+      val violations = readViolations()
+      process(violations)
+
+      ()
+    }
   )
 
   lazy val libraryDependencySettings = Seq(
@@ -32,7 +147,7 @@ object CommonsPlugin extends AutoPlugin {
     libraryDependencies += csvGeneric,
     libraryDependencies += scalaTags,
     libraryDependencies += scopt,
-    libraryDependencies += uPickle,
+    libraryDependencies += uPickle
   )
 
   lazy val scalafixSettings: Seq[Setting[_]] =
@@ -55,59 +170,38 @@ object CommonsPlugin extends AutoPlugin {
       )
     )
 
-  lazy val reportingSettings: Seq[Setting[_]] =
-    Seq(
-      extraLoggers := {
-        import org.apache.logging.log4j.core.LogEvent;
-        import org.apache.logging.log4j.core.appender.AbstractAppender
-        import org.apache.logging.log4j.message.{Message,ObjectMessage}
-
-        import sbt.internal.util.StringEvent
-
-        def loggerNameForKey( key : sbt.Def.ScopedKey[_] ) = s"""reverse.${key.scope.task.toOption.getOrElse("<unknown>")}"""
-
-        class ReverseConsoleAppender( key : ScopedKey[_] ) extends AbstractAppender (
-          loggerNameForKey( key ), // name : String
-          null,                    // filter : org.apache.logging.log4j.core.Filter
-          null,                    // layout : org.apache.logging.log4j.core.Layout[ _ <: Serializable]
-          false                    // ignoreExceptions : Boolean
-        ) {
-
-          this.start() // the log4j2 Appender must be started, or it will fail with an Exception
-
-          override def append( event : LogEvent ) : Unit = {
-            val output = {
-              def forUnexpected( message : Message ) = s"[${this.getName()}] Unexpected: ${message.getFormattedMessage()}"
-              event.getMessage() match {
-                case om : ObjectMessage => { // what we expect
-                  om.getParameter() match {
-                    case se : StringEvent => s"[${this.getName()} - ${se.level}] ${se.message.reverse}"
-                    case other            => forUnexpected( om )
-                  }
-                }
-                case unexpected : Message => forUnexpected( unexpected )
-              }
-            }
-            System.out.synchronized { // sbt adopts a convention of acquiring System.out's monitor printing to the console
-              println( output )
-            }
-          }
-        }
-
-        val currentFunction = extraLoggers.value
-        (key: ScopedKey[_]) => {
-          new ReverseConsoleAppender(key) +: currentFunction(key)
-        }
-      }
-    )
 }
 
 object Dependencies {
-  lazy val catsCore   = "org.typelevel" %% "cats-core"          % "2.0.0"
-  lazy val csv        = "com.nrinaudo"  %% "kantan.csv"         % "0.6.1"
-  lazy val csvGeneric = "com.nrinaudo"  %% "kantan.csv-generic" % "0.6.1"
-  lazy val scalaTags = "com.lihaoyi" %% "scalatags" % "0.8.2"
-  lazy val scopt = "com.github.scopt" %% "scopt" % "4.0.0-RC2"
-  lazy val uPickle    = "com.lihaoyi"   %% "upickle"            % "1.2.2"
-  lazy val scalaTest  = "org.scalatest" %% "scalatest"          % "3.2.2"
+  lazy val catsCore   = "org.typelevel"    %% "cats-core"          % "2.0.0"
+  lazy val csv        = "com.nrinaudo"     %% "kantan.csv"         % "0.6.1"
+  lazy val csvGeneric = "com.nrinaudo"     %% "kantan.csv-generic" % "0.6.1"
+  lazy val scalaTags  = "com.lihaoyi"      %% "scalatags"          % "0.8.2"
+  lazy val scopt      = "com.github.scopt" %% "scopt"              % "4.0.0-RC2"
+  lazy val uPickle    = "com.lihaoyi"      %% "upickle"            % "1.2.2"
+  lazy val scalaTest  = "org.scalatest"    %% "scalatest"          % "3.2.2"
+}
+
+object CompilerReporting {
+  sealed trait Severity
+  case object Info    extends Severity
+  case object Warning extends Severity
+  case object Error   extends Severity
+  object Severity {
+    def apply(s: String): Severity = s.toLowerCase match {
+      case "info"  => Info
+      case "warn"  => Warning
+      case "error" => Error
+      case _       => Info
+    }
+  }
+  case class CheckViolation(
+      file: String,
+      severity: Severity,
+      rule: String,
+      filePath: Any,
+      line: Int,
+      position: Int
+  )
+
 }
