@@ -43,11 +43,11 @@ object CommonsPlugin extends AutoPlugin {
         println("Running static code analysis report. This may take a while ...")
         val violations = new ListBuffer[CheckViolation]()
         "sbt clean compile" ! ProcessLogger( // TODO: this will not work for sub projects
-          { x =>
+          { outputStr =>
             if (VerboseOutput) {
-              println(s"$x")
+              println(outputStr)
             }
-            x match {
+            outputStr match {
               case regex(sev, file, line, pos, rule) =>
                 val filePath = Paths.get(file)
                 val f = {
@@ -82,12 +82,12 @@ object CommonsPlugin extends AutoPlugin {
             }
 
         val reportHeading  = h1("Compiler report")
-        val projectTitle   = b(id := "project-name", s"Project: $projectName")
-        val summaryHeading = h2(id := "summary", s"Summary")
+        val projectTitle   = b(id := "project-name", "Project: $projectName")
+        val summaryHeading = h2(id := "summary", "Summary")
         val summaryOverview =
           table(tr(th("Files"), th("Warnings")), tr(td(filesOverviewRows.size - 1), td(violations.size)))
-        val filesHeading = h2(id := "files", s"Files")
-        val rulesHeading = h2(id := "rules", s"Rules")
+        val filesHeading = h2(id := "files", "Files")
+        val rulesHeading = h2(id := "rules", "Rules")
         val rulesOverView = table(
           tr(th("Rule")(textAlign := "left"), th("Warnings")) +:
             violations.groupBy(_.rule).mapValues(_.size).toList.sortBy(_._1).map {
@@ -96,7 +96,7 @@ object CommonsPlugin extends AutoPlugin {
             }
         )
         val filesOverview  = table(filesOverviewRows)
-        val detailsHeading = h2(id := "details", s"Details")
+        val detailsHeading = h2(id := "details", "Details")
         val detailsOverview = fileToViolations.toList.sortBy(_._1).map { case (file, violations) =>
           div(
             h3(file)(id := file.replace('/', '.')),
