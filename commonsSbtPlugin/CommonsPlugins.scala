@@ -24,15 +24,15 @@ object CommonsPlugin extends AutoPlugin {
       wartremoverSettings
   }
 
-  lazy val checkCompilerReport    = taskKey[Unit]("Prints static code analysis report from compiler")
-  lazy val checkCompilerThreshold = taskKey[Int]("Set threshold to fail on if above this number")
+  lazy val checkCompilerReport    = taskKey[Unit]("Prints static code analysis report based on compiler output")
+  lazy val checkCompilerThreshold = taskKey[Int]("Sets threshold to fail check compiler report if above this number")
 
   import CompilerReporting._
   lazy val commonProjectSettings = Seq(
     scalaVersion := "2.13.3",
     organization := "io.github.lhohan",
     organizationName := "Hans L'Hoest",
-    checkCompilerThreshold := Int.MaxValue,
+    checkCompilerThreshold := 42,
     checkCompilerReport := {
       val VerboseOutput = true // TODO ??? make setting
       val projectName   = name.value
@@ -128,7 +128,8 @@ object CommonsPlugin extends AutoPlugin {
         val threshold = checkCompilerThreshold.value
         if (violations.size > threshold) {
           throw new MessageOnlyException(
-            s"Check compiler threshold exceed, threshold is ${threshold}, number of violations: ${violations.size}"
+            s"Check compiler report: too many compiler warnings: threshold is ${threshold}, " +
+              s"number of warnings reported: ${violations.size}"
           )
         }
       }
