@@ -108,6 +108,6 @@ Important:
 - `quadrant`: must correspond with the lowercase name in the HTML template
 - `moved`: valid values: `up`, `down`, `none`
 
-## Developent
+## Development
 
 Code for the Tech Radar and these docs are hosted on [github](https://github.com/lhohan/tech-radar).
